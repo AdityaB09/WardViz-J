@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WardViz-J</title>
+</head>
+<body class="bg-gray-50 dark:bg-zinc-950 dark:text-zinc-100">
+  <div id="root"></div>
+  <script>
+    window.__API_BASE__ = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) || 'http://localhost:8080';
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

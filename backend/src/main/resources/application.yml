@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wardviz}
+    username: ${SPRING_DATASOURCE_USERNAME:wardviz}
+    password: ${SPRING_DATASOURCE_PASSWORD:wardviz}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
