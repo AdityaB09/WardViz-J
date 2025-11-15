@@ -3,13 +3,15 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wardviz}
     username: ${SPRING_DATASOURCE_USERNAME:wardviz}
     password: ${SPRING_DATASOURCE_PASSWORD:wardviz}
+
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update   # let Hibernate create/update tables instead of Flyway
     properties:
       hibernate.jdbc.time_zone: UTC
+
   flyway:
-    enabled: true
+    enabled: false       # <- turn Flyway OFF so it doesn't choke on PostgreSQL 16.10
 
 server:
   port: 8080
