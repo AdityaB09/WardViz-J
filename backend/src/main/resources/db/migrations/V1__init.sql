@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS note(
   patient_id VARCHAR(64) NOT NULL,
   ts TIMESTAMP WITH TIME ZONE NOT NULL,
   text TEXT NOT NULL,
-  sections JSONB
+  sections    TEXT        NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS event(

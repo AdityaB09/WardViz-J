@@ -1,3 +1,9 @@
 {
-  "text": "Subjective: 2025-09-18 Patient with type 2 diabetes reports fatigue. Objective: HbA1c 9.2 last visit; metformin 500 mg daily started two weeks ago. Assessment: hyperglycemia persists. Plan: uptitrate metformin.\n"
+  "patientId": "P001",
+  "summary": "Type 2 diabetes progression example",
+  "notes": [
+    "2024-01-10: Diagnosed with type 2 diabetes, HbA1c 8.3%",
+    "2024-03-15: Metformin 500 mg started, HbA1c 8.9%",
+    "2024-06-20: Metformin uptitrated to 1000 mg, HbA1c 7.8%"
+  ]
 }
