@@ -1,37 +1,77 @@
-// service/NlpIngestService.java
 package com.wardvizj.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wardvizj.model.Note;
+import com.wardvizj.repo.NoteRepository;
 import org.springframework.stereotype.Service;
-import java.time.*;
-import java.util.*;
-import java.util.regex.*;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class NlpIngestService {
-  private static final Pattern dateP = Pattern.compile(
-   "(\\b20\\d{2}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}/\\d{1,2}/\\d{2,4}\\b)");
-  public record Sectioned(String normalizedText, Map<String,String> sections, OffsetDateTime guessedTs){}
 
-  public Sectioned preprocess(String text){
-    // Minimal sectioning by SOAP keywords
-    Map<String,String> sec = new LinkedHashMap<>();
-    Matcher m = Pattern.compile("(?is)(subjective:|objective:|assessment:|plan:)(.*?)(?=subjective:|objective:|assessment:|plan:|\\Z)")
-      .matcher(text);
-    int hits=0;
-    while(m.find()){
-      sec.put(m.group(1).toLowerCase().replace(":","").trim(), m.group(2).trim());
-      hits++;
+    private final NoteRepository noteRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public NlpIngestService(NoteRepository noteRepository) {
+        this.noteRepository = noteRepository;
     }
-    if(hits==0) sec.put("note", text.trim());
-    // Guess TS from first date mention (fallback now)
-    Matcher dm = dateP.matcher(text);
-    OffsetDateTime ts = OffsetDateTime.now();
-    if(dm.find()){
-      try {
-        String d = dm.group(1);
-        if (d.contains("-")) ts = LocalDate.parse(d).atStartOfDay().atOffset(ZoneOffset.UTC);
-      } catch(Exception ignored){}
+
+    public IngestResult ingest(String patientId, String text) throws JsonProcessingException {
+        Note note = new Note();
+        note.setId(UUID.randomUUID());
+        note.setPatientId(patientId);
+        note.setText(text);
+        note.setTs(OffsetDateTime.now(ZoneOffset.UTC));
+
+        // For now, store a simple JSON with the raw note text.
+        Map<String, Object> sections = Map.of(
+                "raw", text
+        );
+        String sectionsJson = objectMapper.writeValueAsString(sections);
+        note.setSections(sectionsJson);
+
+        noteRepository.save(note);
+
+        IngestResult result = new IngestResult();
+        result.setNoteId(note.getId());
+        result.setPatientId(patientId);
+        result.setEventsCreated(0); // you can bump this later when you wire TimelineEngine
+        return result;
     }
-    return new Sectioned(text, sec, ts);
-  }
+
+    // Simple DTO class for response
+    public static class IngestResult {
+        private UUID noteId;
+        private String patientId;
+        private int eventsCreated;
+
+        public UUID getNoteId() {
+            return noteId;
+        }
+
+        public void setNoteId(UUID noteId) {
+            this.noteId = noteId;
+        }
+
+        public String getPatientId() {
+            return patientId;
+        }
+
+        public void setPatientId(String patientId) {
+            this.patientId = patientId;
+        }
+
+        public int getEventsCreated() {
+            return eventsCreated;
+        }
+
+        public void setEventsCreated(int eventsCreated) {
+            this.eventsCreated = eventsCreated;
+        }
+    }
 }
