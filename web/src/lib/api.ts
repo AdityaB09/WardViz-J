@@ -55,7 +55,7 @@ async function handle<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function getHealth() {
+export async function checkHealth() {
   const res = await fetch(`${API_BASE}/api/health`);
   return handle<{ status: string; service: string }>(res);
 }
