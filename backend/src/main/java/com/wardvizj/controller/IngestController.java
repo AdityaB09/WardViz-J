@@ -1,70 +1,47 @@
 package com.wardvizj.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.wardvizj.service.NlpIngestService;
-import com.wardvizj.service.NlpIngestService.IngestResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.wardvizj.model.IngestResponse;
+import com.wardvizj.model.Note;
+import com.wardvizj.model.TimelineEventDto;
+import com.wardvizj.repo.NoteRepository;
+import com.wardvizj.service.TimelineEngine;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 public class IngestController {
 
-    private static final Logger log = LoggerFactory.getLogger(IngestController.class);
+    private final NoteRepository noteRepository;
+    private final TimelineEngine timelineEngine;
 
-    private final NlpIngestService nlpIngestService;
+    public IngestController(NoteRepository noteRepository,
+                            TimelineEngine timelineEngine) {
+        this.noteRepository = noteRepository;
+        this.timelineEngine = timelineEngine;
+    }
 
-    public IngestController(NlpIngestService nlpIngestService) {
-        this.nlpIngestService = nlpIngestService;
+    public record IngestRequest(String patientId, String text) {
     }
 
     @PostMapping("/ingest")
-    public ResponseEntity<?> ingest(@RequestBody IngestRequest request) {
-        try {
-            IngestResult result =
-                    nlpIngestService.ingest(request.getPatientId(), request.getText());
-            return ResponseEntity.ok(result);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize sections JSON for patient {}", request.getPatientId(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "error", "JSON_SERIALIZATION_FAILED",
-                            "message", e.getMessage()
-                    ));
-        } catch (Exception e) {
-            log.error("Unexpected error during ingest for patient {}", request.getPatientId(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "error", "INGEST_FAILED",
-                            "message", e.getMessage()
-                    ));
-        }
-    }
+    public IngestResponse ingest(@RequestBody IngestRequest request) {
+        Note note = new Note();
+        note.setId(UUID.randomUUID());
+        note.setPatientId(request.patientId());
+        note.setText(request.text());
+        note.setSections("free-text");
+        note.setTs(OffsetDateTime.now(ZoneOffset.UTC));
 
-    // Simple request DTO that matches your curl payload
-    public static class IngestRequest {
-        private String patientId;
-        private String text;
+        Note saved = noteRepository.save(note);
 
-        public String getPatientId() {
-            return patientId;
-        }
+        // Use the same rule engine to estimate how many events this note will generate
+        List<TimelineEventDto> preview = timelineEngine.extractEventsFromNote(saved);
 
-        public void setPatientId(String patientId) {
-            this.patientId = patientId;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
+        return new IngestResponse(saved.getId(), saved.getPatientId(), preview.size());
     }
 }

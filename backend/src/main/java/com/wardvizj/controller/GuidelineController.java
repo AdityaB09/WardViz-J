@@ -1,30 +1,25 @@
-// controller/GuidelineController.java
 package com.wardvizj.controller;
 
-import com.wardvizj.model.GuidelineResult;
-import com.wardvizj.repo.GuidelineRepository;
+import com.wardvizj.model.GuidelineCardDto;
+import com.wardvizj.model.GuidelineResponse;
 import com.wardvizj.service.GuidelineService;
-import com.wardvizj.util.GradeRewriter;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
 
-@RestController @RequestMapping("/api") @RequiredArgsConstructor
+@RestController
+@RequestMapping("/api")
 public class GuidelineController {
-  private final GuidelineService svc;
-  private final GuidelineRepository repo;
 
-  @GetMapping("/guidelines/{patientId}")
-  public Map<String,Object> guidelines(@PathVariable String patientId){
-    List<GuidelineResult> res = svc.evaluate(patientId);
-    return Map.of("cards", res);
-  }
+    private final GuidelineService guidelineService;
 
-  @PostMapping("/rewrite")
-  public Map<String,String> rewrite(@RequestBody RewriteReq req){
-    return Map.of("text", GradeRewriter.rewrite(req.text, req.grade));
-  }
-  @Data public static class RewriteReq{ public String text; public int grade=10; }
+    public GuidelineController(GuidelineService guidelineService) {
+        this.guidelineService = guidelineService;
+    }
+
+    @GetMapping("/guidelines/{patientId}")
+    public GuidelineResponse guidelines(@PathVariable String patientId) {
+        List<GuidelineCardDto> cards = guidelineService.evaluatePatient(patientId);
+        return new GuidelineResponse(cards);
+    }
 }

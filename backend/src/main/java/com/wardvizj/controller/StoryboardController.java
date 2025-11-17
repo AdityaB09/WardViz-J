@@ -1,27 +1,29 @@
-// controller/StoryboardController.java
 package com.wardvizj.controller;
 
-import com.wardvizj.model.Event;
-import com.wardvizj.repo.EventRepository;
+import com.wardvizj.model.EvidenceLinkDto;
+import com.wardvizj.model.StoryboardResponse;
+import com.wardvizj.model.TimelineEventDto;
 import com.wardvizj.service.TimelineEngine;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-@RestController @RequestMapping("/api") @RequiredArgsConstructor
+@RestController
+@RequestMapping("/api")
 public class StoryboardController {
-  private final EventRepository eventRepo;
-  private final TimelineEngine engine;
 
-  @GetMapping("/storyboard/{patientId}")
-  public Map<String,Object> storyboard(@PathVariable String patientId){
-    List<Event> events = eventRepo.findByPatientIdOrderByStartTsAsc(patientId);
-    Map<UUID,Double> ribbons = engine.ribbons(events);
-    Map<String,Object> resp = new LinkedHashMap<>();
-    resp.put("events", events);
-    resp.put("uncertainty", ribbons);
-    resp.put("links", List.of()); // simple for MVP
-    return resp;
-  }
+    private final TimelineEngine timelineEngine;
+
+    public StoryboardController(TimelineEngine timelineEngine) {
+        this.timelineEngine = timelineEngine;
+    }
+
+    @GetMapping("/storyboard/{patientId}")
+    public StoryboardResponse storyboard(@PathVariable String patientId) {
+        List<TimelineEventDto> events = timelineEngine.buildTimelineForPatient(patientId);
+        Map<String, Double> uncertainty = timelineEngine.estimateUncertainty(events);
+        List<EvidenceLinkDto> links = timelineEngine.buildLinks(events);
+        return new StoryboardResponse(events, uncertainty, links);
+    }
 }
