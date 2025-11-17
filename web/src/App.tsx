@@ -1,43 +1,73 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
-import Studio from './pages/Studio'
-import Storyboard from './pages/Storyboard'
-import Guidelines from './pages/Guidelines'
-import Compare from './pages/Compare'
-import ThemeToggle from './components/ThemeToggle'
+import React, { useState } from "react";
+import Studio from "./pages/Studio";
+import Storyboard from "./pages/Storyboard";
+import GuidelinesPage from "./pages/Guidelines";
+import ComparePage from "./pages/Compare";
+import ThemeToggle from "./components/ThemeToggle";
 
-export default function App(){
+type TabKey = "studio" | "storyboard" | "guidelines" | "compare";
+
+const App: React.FC = () => {
+  const [tab, setTab] = useState<TabKey>("studio");
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "studio", label: "📝 Studio" },
+    { key: "storyboard", label: "📊 Storyboard" },
+    { key: "guidelines", label: "📋 Guidelines" },
+    { key: "compare", label: "⚖️ Compare" },
+  ];
+
   return (
-    <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-10 bg-white/70 dark:bg-zinc-900/70 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
-            <div className="font-semibold text-lg">WardViz-J</div>
-            <nav className="flex gap-3">
-              {[
-                ['Studio','/studio'],
-                ['Storyboard','/storyboard'],
-                ['Guidelines','/guidelines'],
-                ['Compare','/compare']
-              ].map(([label,href])=>
-                <NavLink key={href} to={href} className={({isActive})=>
-                  `px-3 py-1 rounded-full ${isActive?'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900':'hover:bg-zinc-100 dark:hover:bg-zinc-800'}`
-                }>{label}</NavLink>
-              )}
-            </nav>
-            <div className="ml-auto"><ThemeToggle/></div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-xl">
+              W
+            </span>
+            <div className="flex flex-col">
+              <span className="font-semibold tracking-tight">WardViz-J</span>
+              <span className="text-xs text-slate-400">
+                Ward-level patient timeline and guideline cockpit
+              </span>
+            </div>
           </div>
-        </header>
-        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
-          <Routes>
-            <Route path="/" element={<Studio/>}/>
-            <Route path="/studio" element={<Studio/>}/>
-            <Route path="/storyboard" element={<Storyboard/>}/>
-            <Route path="/guidelines" element={<Guidelines/>}/>
-            <Route path="/compare" element={<Compare/>}/>
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
-  )
-}
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <nav className="border-t border-slate-800 bg-slate-900">
+          <div className="max-w-6xl mx-auto px-4 flex gap-2 overflow-x-auto py-2">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition
+                  ${
+                    tab === t.key
+                      ? "bg-emerald-500 text-slate-900 font-semibold"
+                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      </header>
+
+      <main className="flex-1">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {tab === "studio" && <Studio />}
+          {tab === "storyboard" && <Storyboard />}
+          {tab === "guidelines" && <GuidelinesPage />}
+          {tab === "compare" && <ComparePage />}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default App;

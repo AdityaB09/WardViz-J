@@ -1,24 +1,87 @@
-const API = (window as any).__API_BASE__ || import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API_BASE =
+  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8080";
 
-export async function ingest(patientId: string, text: string, ts?: string){
-  const r = await fetch(`${API}/api/ingest`, { method:'POST', headers:{'content-type':'application/json'},
-    body: JSON.stringify({patientId,text, ts}) });
-  return r.json();
+export type IngestResponse = {
+  noteId: string;
+  patientId: string;
+  eventsCreated: number;
+};
+
+export type TimelineEvent = {
+  id: string;
+  patientId: string;
+  label: string;
+  category: string;
+  section: string;
+  timestamp: string;
+};
+
+export type EvidenceLink = {
+  id: string;
+  sourceEventId: string;
+  targetEventId: string;
+  relation: string;
+};
+
+export type StoryboardResponse = {
+  events: TimelineEvent[];
+  uncertainty: Record<string, number>;
+  links: EvidenceLink[];
+};
+
+export type GuidelineCard = {
+  id: string;
+  title: string;
+  status: "met" | "gap" | "consider" | string;
+  rationale: string;
+  severity: "high" | "medium" | "low" | string;
+};
+
+export type GuidelineResponse = {
+  cards: GuidelineCard[];
+};
+
+async function handle<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      msg = data.error || data.message || msg;
+    } catch {
+      // ignore parsing error
+    }
+    throw new Error(msg);
+  }
+  return res.json() as Promise<T>;
 }
-export async function storyboard(patientId: string){
-  const r = await fetch(`${API}/api/storyboard/${encodeURIComponent(patientId)}`); return r.json();
+
+export async function getHealth() {
+  const res = await fetch(`${API_BASE}/api/health`);
+  return handle<{ status: string; service: string }>(res);
 }
-export async function counterfactual(patientId: string, medLabel: string, cutoff: string){
-  const r = await fetch(`${API}/api/counterfactual`, { method:'POST', headers:{'content-type':'application/json'},
-    body: JSON.stringify({patientId, medLabel, cutoff}) }); return r.json();
+
+export async function ingestNote(input: {
+  patientId: string;
+  text: string;
+}): Promise<IngestResponse> {
+  const res = await fetch(`${API_BASE}/api/ingest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return handle<IngestResponse>(res);
 }
-export async function explain(eventId: string){
-  const r = await fetch(`${API}/api/explain/${eventId}`); return r.json();
+
+export async function getStoryboard(
+  patientId: string
+): Promise<StoryboardResponse> {
+  const res = await fetch(`${API_BASE}/api/storyboard/${encodeURIComponent(patientId)}`);
+  return handle<StoryboardResponse>(res);
 }
-export async function guidelines(patientId: string){
-  const r = await fetch(`${API}/api/guidelines/${encodeURIComponent(patientId)}`); return r.json();
-}
-export async function rewrite(text: string, grade: number){
-  const r = await fetch(`${API}/api/rewrite`, { method:'POST', headers:{'content-type':'application/json'},
-    body: JSON.stringify({text, grade}) }); return r.json();
+
+export async function getGuidelines(
+  patientId: string
+): Promise<GuidelineResponse> {
+  const res = await fetch(`${API_BASE}/api/guidelines/${encodeURIComponent(patientId)}`);
+  return handle<GuidelineResponse>(res);
 }

@@ -1,23 +1,30 @@
-import React, { useEffect, useRef } from 'react'
-import * as THREE from 'three'
+import React from "react";
 
-export default function AnatomyPanel({highlight}:{highlight?:'pancreas'|'heart'|'skin' }){
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(()=>{
-    const el = ref.current!; const w=260, h=180
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 100)
-    const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true})
-    renderer.setSize(w,h); el.innerHTML=''; el.appendChild(renderer.domElement)
-    const geo = new THREE.SphereGeometry(1,32,32)
-    const color = highlight==='heart'?0xff5555:highlight==='pancreas'?0xffcc66: highlight==='skin'?0xffaa99: 0x8ab4f8
-    const mat = new THREE.MeshStandardMaterial({color})
-    const mesh = new THREE.Mesh(geo, mat); scene.add(mesh)
-    const light = new THREE.PointLight(0xffffff, 1.2); light.position.set(2,2,3); scene.add(light)
-    camera.position.z=3
-    let f=0; const tick = ()=>{ f+=0.01; mesh.rotation.y=f; renderer.render(scene,camera); requestAnimationFrame(tick) }
-    tick()
-    return ()=>renderer.dispose()
-  },[highlight])
-  return <div className="w-[260px] h-[180px] rounded-xl border dark:border-zinc-800" ref={ref}/>
-}
+const AnatomyPanel: React.FC = () => {
+  return (
+    <div className="border border-slate-800 rounded-xl p-4 bg-slate-900/60 text-xs text-slate-300 space-y-2">
+      <div className="font-semibold text-slate-100">
+        How WardViz-J uses a note
+      </div>
+      <ul className="list-disc list-inside space-y-1">
+        <li>
+          Looks for keywords like <code>type 2 diabetes</code>,{" "}
+          <code>hypertension</code>, <code>metformin</code>,{" "}
+          <code>HbA1c 9.2</code>, <code>rash</code>, <code>infection</code>.
+        </li>
+        <li>
+          Creates timeline events (diagnosis, meds, labs, symptoms, treatments).
+        </li>
+        <li>
+          Builds simple guideline cards about control, therapy gaps, and risks.
+        </li>
+        <li>
+          Different texts → different event sets and guideline cards, so you can
+          demo multiple patients.
+        </li>
+      </ul>
+    </div>
+  );
+};
+
+export default AnatomyPanel;
